@@ -5,7 +5,7 @@
 1. Clone the repository:
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/oscar3x39/ssl-expiration-checker.git
 ```
 
 2. Install dependencies:
@@ -14,7 +14,12 @@ git clone <repository-url>
 go mod tidy
 ```
 
-3. Create a config.yaml file with the following structure:
+3. Compile the Go code:
+```bash
+go build -o ssl-checker main.go
+```
+
+4. Create a config.yaml file with the following structure:
 ```bash
 slack_webhook_url: "https://hooks.slack.com/services/your-webhook-url"
 domains:
@@ -24,14 +29,26 @@ domains:
   # Add more domains as needed
 ```
 
-4. Replace your-webhook-url with your actual Slack webhook URL.
+5. Replace your-webhook-url with your actual Slack webhook URL.
 
-# Usage
-
-`To run the program, execute the following command:`
-```bash
-go run main.go
+# Usag
+To manually run the program, execute the following command:
 ```
+./ssl-checker
+```
+
+# Scheduler
+
+Use cron jobs to schedule the execution of the ssl-checker binary. Edit the crontab file by running:
+```bash
+crontab -e
+```
+
+Then, add the following line to execute the program daily at midnight:
+```bash
+0 0 * * * /path/to/ssl-checker
+```
+
 
 # Functionality
 - The program reads the configuration from config.yaml, which includes the Slack webhook URL and a list of domains to check.
