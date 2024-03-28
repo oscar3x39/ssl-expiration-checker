@@ -44,7 +44,7 @@ func main() {
 			} else if err == ErrCertExpiring {
 				errorMessage = fmt.Sprintf("Certificate is expiring soon: %v", err)
 			}
-			errSlack := sendSlackMessage(domain, errorMessage) // Pass domain as the first argument
+			errSlack := sendSlackMessage(config.SlackWebhookURL, domain, errorMessage)
 			if errSlack != nil {
 				log.Printf("Unable to send message to Slack: %v", errSlack)
 			}
@@ -102,31 +102,28 @@ func checkCertValidity(domain string) error {
 	return nil
 }
 
-func sendSlackMessage(domain Domain, errorMessage string) error {
-	// Slack Webhook URL (hardcoded)
-	webhookURL := "https://hooks.slack.com/services/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"
+func sendSlackMessage(webhookURL string, domain Domain, errorMessage string) error {
+    // Construct the message content, using Markdown formatting, and adding emoji
+    message := fmt.Sprintf(":warning: *Certificate check failed:*\n*Name:* %s\n*URL:* <%s|%s>\n*Contact:* %s\n*Error:* %s", domain.Name, domain.URL, domain.URL, domain.Contact, errorMessage)
 
-	// Construct the message content, using Markdown formatting, and adding emoji
-	message := fmt.Sprintf(":warning: *Certificate check failed:*\n*Name:* %s\n*URL:* <%s|%s>\n*Contact:* %s\n*Error:* %s", domain.Name, domain.URL, domain.URL, domain.Contact, errorMessage)
+    // Construct the payload for the message
+    payload := map[string]string{"text": message}
+    payloadBytes, err := json.Marshal(payload)
+    if err != nil {
+        return fmt.Errorf("Unable to serialize JSON: %v", err)
+    }
 
-	// Construct the payload for the message
-	payload := map[string]string{"text": message}
-	payloadBytes, err := json.Marshal(payload)
-	if err != nil {
-		return fmt.Errorf("Unable to serialize JSON: %v", err)
-	}
+    // Send the POST request to Slack Webhook
+    resp, err := http.Post(webhookURL, "application/json", bytes.NewBuffer(payloadBytes))
+    if err != nil {
+        return fmt.Errorf("Unable to send POST request to Slack Webhook: %v", err)
+    }
+    defer resp.Body.Close()
 
-	// Send the POST request to Slack Webhook
-	resp, err := http.Post(webhookURL, "application/json", bytes.NewBuffer(payloadBytes))
-	if err != nil {
-		return fmt.Errorf("Unable to send POST request to Slack Webhook: %v", err)
-	}
-	defer resp.Body.Close()
+    // Check the response status code
+    if resp.StatusCode != http.StatusOK {
+        return fmt.Errorf("Slack Webhook response status code: %d", resp.StatusCode)
+    }
 
-	// Check the response status code
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("Slack Webhook response status code: %d", resp.StatusCode)
-	}
-
-	return nil
+    return nil
 }
