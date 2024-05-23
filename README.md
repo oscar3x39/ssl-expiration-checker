@@ -31,7 +31,7 @@ domains:
 
 5. Replace your-webhook-url with your actual Slack webhook URL.
 
-# Usag
+# Usage
 To manually run the program, execute the following command:
 ```
 ./ssl-checker
